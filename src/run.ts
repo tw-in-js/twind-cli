@@ -20,7 +20,7 @@ const tryLoadConfig = (configFile: string): Configuration => {
   try {
     return importFresh(configFile)
   } catch (error) {
-    console.log(error)
+    console.error(error)
     return {}
   }
 }
@@ -88,8 +88,8 @@ const run$ = async (globs: string[], options: RunOptions, esbuild: Service): Pro
   let lastCandidates = new Set<string>(['' /* ensure an empty CSS may be generated */])
 
   for await (const changes of watch(configFile ? [configFile, ...globs] : globs, options)) {
-    // console.log([...changes.keys()])
-    console.log(
+    // console.error([...changes.keys()])
+    console.error(
       kleur.cyan(
         `Processing ${kleur.bold(changes.size)}${options.watch ? ' changed' : ''} file${
           changes.size == 1 ? '' : 's'
@@ -106,7 +106,7 @@ const run$ = async (globs: string[], options: RunOptions, esbuild: Service): Pro
         ;({ sheet, tw } = loadConfig())
         hasChanged = true
         lastCandidates = new Set<string>(['' /* ensure an empty CSS may be generated */])
-        console.log(
+        console.error(
           kleur.green(
             `Loaded configuration from ${kleur.bold(
               path.relative(process.cwd(), configFile),
@@ -123,7 +123,7 @@ const run$ = async (globs: string[], options: RunOptions, esbuild: Service): Pro
         ) {
           pendingDetections.push(
             extractRulesFromFile(file).then((candidates) => {
-              // console.log({file, candidates})
+              // console.error({file, candidates})
               watched.set(file, stats)
               candidatesByFile.set(file, candidates)
               if (!hasChanged) {
@@ -154,7 +154,7 @@ const run$ = async (globs: string[], options: RunOptions, esbuild: Service): Pro
       candidates.forEach(addCandidate)
     })
 
-    console.log(
+    console.error(
       kleur.gray(
         `Extracted ${kleur.bold(nextCandidates.size)} candidate${
           nextCandidates.size == 1 ? '' : 's'
@@ -168,8 +168,8 @@ const run$ = async (globs: string[], options: RunOptions, esbuild: Service): Pro
       const twEndTime = timeSpan()
       sheet.reset()
       tw([...nextCandidates].filter(ignoreUnknownRules).sort().join(' '))
-      // console.log([...nextCandidates].sort().join(' '))
-      console.log(
+      // console.error([...nextCandidates].sort().join(' '))
+      console.error(
         kleur.gray(
           `Generated ${kleur.bold(sheet.target.length)} CSS rule${
             sheet.target.length == 1 ? '' : 's'
@@ -190,7 +190,7 @@ const run$ = async (globs: string[], options: RunOptions, esbuild: Service): Pro
         })
 
         css = result.code
-        console.log(
+        console.error(
           kleur.gray(
             `${options.beautify ? 'Beautified' : 'Minimized'} CSS in ${kleur.bold(
               cssEndTime.rounded() + ' ms',
@@ -202,7 +202,7 @@ const run$ = async (globs: string[], options: RunOptions, esbuild: Service): Pro
       // Write to file or console
       if (outputFile) {
         await fs.writeFile(outputFile, css)
-        console.log(
+        console.error(
           kleur.green(
             `Finished ${kleur.bold(path.relative(process.cwd(), outputFile))} in ${kleur.bold(
               endTime.rounded() + ' ms',
@@ -210,14 +210,15 @@ const run$ = async (globs: string[], options: RunOptions, esbuild: Service): Pro
           ),
         )
       } else {
-        // console.log(css)
+        console.error(kleur.green(`Finished in ${kleur.bold(endTime.rounded() + ' ms')}`))
+        console.log(css)
       }
     } else {
-      console.log(kleur.green().dim(`No new classes detected - skipped generating CSS`))
+      console.error(kleur.green().dim(`No new classes detected - skipped generating CSS`))
     }
 
     if (options.watch) {
-      console.log('\n' + kleur.dim('Waiting for file changes...'))
+      console.error('\n' + kleur.dim('Waiting for file changes...'))
     }
   }
 }

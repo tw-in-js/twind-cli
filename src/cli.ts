@@ -13,7 +13,7 @@ export const cli = (argv = process.argv) =>
     .option('-b, --beautify', 'Generate beautified css file', false)
     .option('-C, --cwd', 'The current directory to resolve from', '.')
     .option('-w, --watch', 'Watch for changes', false)
-    .option('--color', 'Print colorized output', supportsColor.stdout && supportsColor.stderr)
+    .option('--color', 'Print colorized output', supportsColor.stderr)
     .action(async (globs = '**/*.{htm,html,js,jsx,tsx,svelte,vue,mdx}', {_, ['ignore-file']: ignoreFile, ...options}) => {
       try {
         await run([globs, ..._], {...options, ignoreFile})
