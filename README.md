@@ -20,7 +20,26 @@ yarn add @twind/cli
 ## Usage
 
 ```bash
-node -r esm -r esbuild-register bin/twind.js -c src/__fixtures__/twind.config.js -o build/tailwind.css -w -b
+# Find all htm,html,js,jsx,tsx,svelte,vue,mdx files and print generated CSS
+twind
+
+# Write CSS to a file
+twind -o public/styles.css
+
+# Use custom globs
+twind 'src/**/*.jsx' 'public/**/*.html'
+
+# Watch mode
+twind -w
+
+# Generate beautified css file
+twind -b
+
+# Use different twind config (esm or cjs)
+twind -c src/twind.config.js
+
+# Use different tailwind config (esm or cjs)
+twind -c tailwind.prod.js
 ```
 
 ```
@@ -28,18 +47,18 @@ node -r esm -r esbuild-register bin/twind.js -c src/__fixtures__/twind.config.js
     $ twind [...globs=**/*.{htm,html,js,jsx,tsx,svelte,vue,mdx}] [options]
 
   Options
-    -o, --output      Set output css file path
-    -c, --config      Set config file path
-    -i, --ignore      Any file patterns to ignore
-    --ignore-file     gitignore like file  (default .gitignore)
-    -b, --beautify    Generate beautified css file  (default false)
-    -C, --cwd         The current directory to resolve from  (default .)
-    -w, --watch       Watch for changes  (default false)
-    --color           Print colorized output  (default [object Object])
-    -v, --version     Displays current version
-    -h, --help        Displays this message
+    -o, --output         Set output css file path (default print to console)
+    -c, --config         Set config file path (default twind.config.[cm]js or tailwind.config.[cm]js
+    -i, --ignore         Any file patterns to ignore
+    -I, --ignore-file    gitignore like file  (default .gitignore)
+    -b, --beautify       Generate beautified css file  (default false)
+    -C, --cwd            The current directory to resolve from  (default .)
+    -w, --watch          Watch for changes  (default false)
+    --color              Print colorized output - to disable use --no-color  (default true)
+    -v, --version        Displays current version
+    -h, --help           Displays this message
 ```
 
 ## License
 
-[MIT](https://github.com/tw-in-js/content/blob/main/LICENSE)
+[MIT](https://github.com/tw-in-js/cli/blob/main/LICENSE)

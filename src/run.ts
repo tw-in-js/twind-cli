@@ -112,10 +112,10 @@ const run$ = async (globs: string[], options: RunOptions, esbuild: Service): Pro
 
   const configFile =
     (options.config && path.resolve(options.cwd, options.config)) ||
-    (await findUp(['twind.config.js', 'twind.config.mjs', 'twind.config.cjs'], {
+    (await findUp(['twind.config.js', 'twind.config.mjs', 'twind.config.cjs', 'twind.config.ts'], {
       cwd: options.cwd,
     })) ||
-    (await findUp(['tailwind.config.js', 'tailwind.config.mjs', 'tailwind.config.cjs'], {
+    (await findUp(['tailwind.config.js', 'tailwind.config.mjs', 'tailwind.config.cjs', 'tailwind.config.ts'], {
       cwd: options.cwd,
     }))
 
@@ -184,7 +184,7 @@ const run$ = async (globs: string[], options: RunOptions, esbuild: Service): Pro
   }
 
   console.error(
-    kleur.dim(`Watching the following patterns: ${kleur.bold(JSON.stringify(globs).slice(1, -1))}`),
+    kleur.dim(`Using the following patterns: ${kleur.bold(JSON.stringify(globs).slice(1, -1))}`),
   )
 
   for await (const changes of watch(configFile ? [configFile, ...globs] : globs, options)) {
@@ -315,6 +315,10 @@ const run$ = async (globs: string[], options: RunOptions, esbuild: Service): Pro
     if (options.watch) {
       console.error('\n' + kleur.dim('Waiting for file changes...'))
     }
+  }
+
+  if (runCount < 0) {
+    console.error(kleur.yellow(`No matching files found...`))
   }
 }
 
