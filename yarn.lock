@@ -1013,10 +1013,10 @@ totalist@^2.0.0:
   resolved "https://registry.npmjs.org/totalist/-/totalist-2.0.0.tgz#db6f1e19c0fa63e71339bbb8fba89653c18c7eec"
   integrity sha512-+Y17F0YzxfACxTyjfhnJQEe7afPA0GSpYlFkl2VFMxYP7jshQf9gXV7cH47EfToBumFThfKBvfAcoUn6fdNeRQ==
 
-twind@>=0.15.7:
-  version "0.15.7"
-  resolved "https://registry.npmjs.org/twind/-/twind-0.15.7.tgz#bf8cb62d90db5da7b15768b09c0115024101255f"
-  integrity sha512-ryDE0yE9QiEZcYiAi2WB22xbK9B1ahbyb9T8iFxehiLAdWL6VUlxoqzuPRbAzPfbUwDfkZAfZVjnCU4ekPj4qg==
+twind@>=0.15.8:
+  version "0.15.8"
+  resolved "https://registry.npmjs.org/twind/-/twind-0.15.8.tgz#92ebefbf59a9e77d2f245774e415c3caaaf2657e"
+  integrity sha512-Iej4EeybEpBZoXETioSayYe7b4j3KkkbCgxnYgqjOIt3c9FUYULIJRt1XkNcFW4LNSgrk4XgX/9AxRpmli9jkQ==
   dependencies:
     csstype "^3.0.5"
     htmlparser2 "^6.0.0"

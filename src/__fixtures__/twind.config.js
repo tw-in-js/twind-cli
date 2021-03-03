@@ -3,7 +3,7 @@ module.exports = {
   preflight: false,
   theme: {
     extend: {
-      colors: {}
-    }
-  }
+      colors: {},
+    },
+  },
 }

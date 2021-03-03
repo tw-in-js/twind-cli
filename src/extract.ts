@@ -31,11 +31,11 @@ const removeInvalidCandidate = (candidate: string): boolean => {
     // Either of the following two must match
     // support @sm:..., >sm:..., <sm:...
     /^[@<>][^:]+:/.test(candidate) !=
-    // - starts with <:#.,;?\d[\]%/$&@_
-    // - v-*: (vue)
-    // - aria-*
-    // - url like
-    /^-?[<:#.,;?\d[\]%/$&@_]|^v-[^:]+:|^aria-|^https?:\/\/|^mailto:|^tel:/.test(candidate)
+      // - starts with <:#.,;?\d[\]%/$&@_
+      // - v-*: (vue)
+      // - aria-*
+      // - url like
+      /^-?[<:#.,;?\d[\]%/$&@_]|^v-[^:]+:|^aria-|^https?:\/\/|^mailto:|^tel:/.test(candidate)
   )
 }
 

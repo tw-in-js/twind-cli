@@ -1,12 +1,12 @@
 import type { Stats } from 'fs'
 import fs from 'fs/promises'
 import path from 'path'
+import Module from 'module'
 
 import type { Service } from 'esbuild'
 import kleur from 'kleur'
 import { startService } from 'esbuild'
 import timeSpan from 'time-span'
-import importFresh from 'import-fresh'
 
 import type { TW, Configuration, Mode } from 'twind'
 import type { VirtualSheet } from 'twind/sheets'
@@ -15,14 +15,74 @@ import { virtualSheet } from 'twind/sheets'
 
 import { watch } from './watch'
 import { extractRulesFromFile } from './extract'
+import findUp from 'find-up'
 
-const tryLoadConfig = (configFile: string): Configuration => {
-  try {
-    return importFresh(configFile)
-  } catch (error) {
-    console.error(error)
-    return {}
+const tryLoadConfig = async (
+  configFile: string,
+  esbuild: Service,
+): Promise<Configuration & { purge?: string[] | { content?: string[] } }> => {
+  const result = await esbuild.build({
+    bundle: true,
+    entryPoints: [configFile],
+    format: 'cjs',
+    minify: false,
+    platform: 'node',
+    target: `node${process.versions.node}`,
+    sourcemap: true,
+    splitting: false,
+    write: false,
+  })
+
+  const module = { exports: {} as { default?: Configuration } & Configuration }
+
+  new Function(
+    'exports',
+    'require',
+    'module',
+    '__filename',
+    '__dirname',
+    result.outputFiles[0].text,
+  )(
+    module.exports,
+    Module.createRequire?.(configFile) || Module.createRequireFromPath(configFile),
+    module,
+    configFile,
+    path.dirname(configFile),
+  )
+
+  const config = module.exports.default || module.exports || {}
+
+  // could be tailwind config
+  if (
+    (Array.isArray(config.plugins) ||
+      // Twind has variants as {key: string}; Tailwind array or object
+      Object.values(config.variants || {}).some((value) => typeof value == 'object') ||
+      typeof config.prefix == 'string',
+    'presets' in config ||
+      'important' in config ||
+      'separator' in config ||
+      'variantOrder' in config ||
+      'corePlugins' in config ||
+      'purge' in config)
+  ) {
+    console.error(
+      kleur.red(
+        `${kleur.bold(
+          path.relative(process.cwd(), configFile),
+        )} is a tailwindcss configuration file – ${kleur.bold(
+          'only',
+        )} the theme, darkMode, purge files are used`,
+      ),
+    )
+
+    return {
+      theme: config.theme,
+      darkMode: config.darkMode,
+      purge: (config as any).purge,
+    }
   }
+
+  return config
 }
 
 export interface RunOptions {
@@ -50,7 +110,14 @@ const run$ = async (globs: string[], options: RunOptions, esbuild: Service): Pro
 
   options.cwd = path.resolve(options.cwd || '.')
 
-  const configFile = options.config && path.resolve(options.cwd, options.config)
+  const configFile =
+    (options.config && path.resolve(options.cwd, options.config)) ||
+    (await findUp(['twind.config.js', 'twind.config.mjs', 'twind.config.cjs'], {
+      cwd: options.cwd,
+    })) ||
+    (await findUp(['tailwind.config.js', 'tailwind.config.mjs', 'tailwind.config.cjs'], {
+      cwd: options.cwd,
+    }))
 
   // Track unknown rules
   const unknownRules = new Set<string>()
@@ -64,30 +131,64 @@ const run$ = async (globs: string[], options: RunOptions, esbuild: Service): Pro
     },
   }
 
-  const loadConfig = (): { sheet: VirtualSheet; tw: TW } => {
-    // TODO use esbuild to bundle config
+  const watched = new Map<string, Stats>()
+  const candidatesByFile = new Map<string, string[]>()
+  let lastCandidates = new Set<string>(['' /* ensure an empty CSS may be generated */])
+
+  // The initial run is not counted -> -1, initialRun=0, first run=1
+  let runCount = -1
+
+  const loadConfig = async (): Promise<{ sheet: VirtualSheet; tw: TW }> => {
+    let config: Configuration & { purge?: string[] | { content?: string[] } } = {}
+
+    if (configFile) {
+      const configEndTime = timeSpan()
+
+      config = await tryLoadConfig(configFile, esbuild)
+
+      console.error(
+        kleur.green(
+          `Loaded configuration from ${kleur.bold(
+            path.relative(process.cwd(), configFile),
+          )} in ${kleur.bold(configEndTime.rounded() + ' ms')}`,
+        ),
+      )
+
+      if (runCount < 1 && config.purge) {
+        if (Array.isArray(config.purge)) {
+          globs = [...globs, ...config.purge]
+        } else if (Array.isArray(config.purge.content)) {
+          globs = [...globs, ...config.purge.content]
+        }
+      }
+    }
+
     unknownRules.clear()
-    const config = configFile && tryLoadConfig(configFile)
+    lastCandidates = new Set<string>(['' /* ensure an empty CSS may be generated */])
+
     const sheet = virtualSheet()
+
     return {
       sheet,
       tw: create({ ...config, sheet, mode, hash: false }).tw,
     }
   }
 
-  let { sheet, tw } = loadConfig()
+  let { sheet, tw } = await loadConfig()
 
   const outputFile = options.output && path.resolve(options.cwd, options.output)
 
-  if (outputFile) {
-    await fs.mkdir(path.dirname(outputFile), { recursive: true })
+  globs = globs.filter(Boolean)
+  if (!globs.length) {
+    globs.push('**/*.{htm,html,js,jsx,tsx,svelte,vue,mdx}')
   }
 
-  const watched = new Map<string, Stats>()
-  const candidatesByFile = new Map<string, string[]>()
-  let lastCandidates = new Set<string>(['' /* ensure an empty CSS may be generated */])
+  console.error(
+    kleur.dim(`Watching the following patterns: ${kleur.bold(JSON.stringify(globs).slice(1, -1))}`),
+  )
 
   for await (const changes of watch(configFile ? [configFile, ...globs] : globs, options)) {
+    runCount++
     // console.error([...changes.keys()])
     console.error(
       kleur.cyan(
@@ -102,17 +203,10 @@ const run$ = async (globs: string[], options: RunOptions, esbuild: Service): Pro
     let hasChanged = false
     for (const [file, stats] of changes.entries()) {
       if (file == configFile) {
-        const configEndTime = timeSpan()
-        ;({ sheet, tw } = loadConfig())
-        hasChanged = true
-        lastCandidates = new Set<string>(['' /* ensure an empty CSS may be generated */])
-        console.error(
-          kleur.green(
-            `Loaded configuration from ${kleur.bold(
-              path.relative(process.cwd(), configFile),
-            )} in ${kleur.bold(configEndTime.rounded() + ' ms')}`,
-          ),
-        )
+        if (runCount) {
+          ;({ sheet, tw } = await loadConfig())
+          hasChanged = true
+        }
       } else if (stats) {
         const watchedStats = watched.get(file)
         if (
@@ -201,6 +295,7 @@ const run$ = async (globs: string[], options: RunOptions, esbuild: Service): Pro
 
       // Write to file or console
       if (outputFile) {
+        await fs.mkdir(path.dirname(outputFile), { recursive: true })
         await fs.writeFile(outputFile, css)
         console.error(
           kleur.green(

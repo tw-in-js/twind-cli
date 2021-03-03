@@ -41,14 +41,13 @@
     "esbuild": "^0.8.36",
     "find-up": "^5.0.0",
     "ignore": "^5.1.8",
-    "import-fresh": "^3.3.0",
     "kleur": "^4.1.4",
     "p-debounce": "^2.1.0",
     "p-event": "^4.2.0",
     "sade": "^1.7.4",
     "supports-color": "^8.1.1",
     "time-span": "^4.0.0",
-    "twind": ">=0.15.7",
+    "twind": ">=0.15.8",
     "v8-compile-cache": "^2.2.0"
   },
   "peerDependencies": {

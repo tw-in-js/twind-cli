@@ -40,8 +40,8 @@ export function watch(
     alwaysStat: true,
     followSymlinks: true,
     awaitWriteFinish: {
-      stabilityThreshold: 50,
-      pollInterval: 10,
+      stabilityThreshold: 120,
+      pollInterval: 20,
     },
   })
 

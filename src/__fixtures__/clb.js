@@ -7,11 +7,11 @@ const buttonBuilder = clb({
   },
   variants: {
     color: {
-      gray: props => ({
+      gray: (props) => ({
         'text-gray-800 bg-gray-800': !props.disabled,
         'text-gray-400 bg-gray-200': props.disabled,
       }),
-      red: props => ({
+      red: (props) => ({
         'text-red-800 bg-red-800': !props.disabled,
         'text-red-400 bg-red-200': props.disabled,
       }),
