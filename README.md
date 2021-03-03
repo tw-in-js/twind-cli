@@ -1,9 +1,15 @@
 # @twind/cli
 
+<div align="center">
+
 [![MIT License](https://flat.badgen.net/github/license/tw-in-js/twind-cli)](https://github.com/tw-in-js/twind-cli/blob/main/LICENSE)
 [![Latest Release](https://flat.badgen.net/npm/v/@twind/cli?icon=npm&label&cache=10800&color=blue)](https://www.npmjs.com/package/@twind/cli)
 [![Github](https://flat.badgen.net/badge/icon/tw-in-js%2Ftwind-cli?icon=github&label)](https://github.com/tw-in-js/twind-cli)
 [![Typescript](https://flat.badgen.net/badge/icon/included?icon=typescript&label)](https://unpkg.com/browse/@twind/cli/cli.d.ts)
+
+![Twind Demo](https://raw.githubusercontent.com/tw-in-js/twind-cli/main/assets/demo.gif)
+
+</div>
 
 ## Installation
 
