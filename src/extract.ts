@@ -2,30 +2,45 @@ import { match } from 'assert'
 import { readFile } from 'fs/promises'
 
 const cleanCandidate = (candidate: string): string => {
-  // 1. remove leading :class and class:
-  return candidate.replace(/^:?class:/, '')
+  // 1. remove leading class: (svelte)
+  return candidate.replace(/^class:/, '')
 }
 
-const COMMON_INVALID_CANDIDATES = new Set(['!DOCTYPE'])
+const COMMON_INVALID_CANDIDATES = new Set([
+  '!DOCTYPE',
+  'true',
+  'false',
+  'null',
+  'undefined',
+  'class',
+  'className',
+  'currentColor',
+])
 
 const removeInvalidCandidate = (candidate: string): boolean => {
   return !(
     COMMON_INVALID_CANDIDATES.has(candidate) ||
-    // Remove candiate match the following rules
-    // 1. url like
-    // 2. non number fractions and decimals
-    // 3. starting with number like
-    // 4. ending with -, /, @, $, &
-    // 5. empty
-    /^https?:\/\/|^mailto:|^tel:|\D[/.]\D|^[-\d.\/!]+|[-/@$&]$|^\s*$/.test(candidate)
+    // Remove candiate if it matches the following rules
+    // - no lower case char
+    !/[a-z]/.test(candidate) ||
+    // - containing uppercase letters
+    // - non number fractions and decimals
+    // - ending with -, /, @, $, &
+    // - white space only
+    /[A-Z]|\D[/.]\D|[-/@$&]$|^\s*$/.test(candidate) ||
+    // Either of the following two must match
+    // support @sm:..., >sm:..., <sm:...
+    /^[@<>][^:]+:/.test(candidate) !=
+    // - starts with <:#.,;?\d[\]%/$&@_
+    // - v-*: (vue)
+    // - aria-*
+    // - url like
+    /^-?[<:#.,;?\d[\]%/$&@_]|^v-[^:]+:|^aria-|^https?:\/\/|^mailto:|^tel:/.test(candidate)
   )
 }
 
 export const extractRulesFromString = (content: string): string[] => {
-  return (
-    // TODO support @sm:..., >sm:..., <sm:...
-    content.match(/(?![<>"'`\s(){}=:#.,;?\d[\]%/$&])[^<>"'`\s(){}=]+[^<>"'`\s(){}=:#.,;?]/g) || []
-  )
+  return (content.match(/[^>"'`\s(){}[\]=][^<>"'`\s(){}=]*[^<>"'`\s(){}=:#.,;?]/g) || [])
     .map(cleanCandidate)
     .filter(removeInvalidCandidate)
 }
