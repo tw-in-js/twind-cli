@@ -9,7 +9,7 @@ export const cli = (argv = process.argv) =>
     .option('-o, --output', 'Set output css file path')
     .option('-c, --config', 'Set config file path')
     .option('-i, --ignore', 'Any file patterns to ignore')
-    .option('--ignore-file', 'gitignore like file', '.gitignore')
+    .option('-I, --ignore-file', 'gitignore like file', '.gitignore')
     .option('-b, --beautify', 'Generate beautified css file', false)
     .option('-C, --cwd', 'The current directory to resolve from', '.')
     .option('-w, --watch', 'Watch for changes', false)

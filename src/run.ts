@@ -14,7 +14,7 @@ import { create } from 'twind'
 import { virtualSheet } from 'twind/sheets'
 
 import { watch } from './watch'
-import { extractRules } from './extract'
+import { extractRulesFromFile } from './extract'
 
 const tryLoadConfig = (configFile: string): Configuration => {
   try {
@@ -122,7 +122,7 @@ const run$ = async (globs: string[], options: RunOptions, esbuild: Service): Pro
           watchedStats.ino !== stats.ino
         ) {
           pendingDetections.push(
-            extractRules(file).then((candidates) => {
+            extractRulesFromFile(file).then((candidates) => {
               // console.log({file, candidates})
               watched.set(file, stats)
               candidatesByFile.set(file, candidates)
