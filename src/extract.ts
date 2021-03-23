@@ -23,15 +23,14 @@ const removeInvalidCandidate = (candidate: string): boolean => {
     // Remove candiate if it matches the following rules
     // - no lower case char
     !/[a-z]/.test(candidate) ||
-    // - containing uppercase letters
-    // - non number fractions and decimals
+    // - Starts with an uppercase char
     // - ending with -, /, @, $, &
     // - white space only
-    /[A-Z]|\D[/.]\D|[-/@$&]$|^\s*$/.test(candidate) ||
+    /^[A-Z]|[-/@$&]$|^\s*$/.test(candidate) ||
     // Either of the following two must match
-    // support @sm:..., >sm:..., <sm:...
-    /^[@<>][^:]+:/.test(candidate) !=
-      // - starts with <:#.,;?\d[\]%/$&@_
+    // support @sm:..., >sm:..., <sm:..., [lang]:
+    /^[@<>[][^:]+:/.test(candidate) !=
+      // - starts with <:#.,;?\d\]%/$&@_
       // - v-*: (vue)
       // - aria-*
       // - url like
@@ -40,7 +39,7 @@ const removeInvalidCandidate = (candidate: string): boolean => {
 }
 
 export const extractRulesFromString = (content: string): string[] => {
-  return (content.match(/[^>"'`\s(){}[\]=][^<>"'`\s(){}=]*[^<>"'`\s(){}=:#.,;?]/g) || [])
+  return (content.match(/[^>"'`\s(){}\]=][^<>"'`\s]*[^<>"'`\s(){}=:#.,;?]/g) || [])
     .map(cleanCandidate)
     .filter(removeInvalidCandidate)
 }

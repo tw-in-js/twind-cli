@@ -1,12 +1,10 @@
 import type { Stats } from 'fs'
 import fs from 'fs/promises'
 import path from 'path'
-import Module from 'module'
 
-import type { Service } from 'esbuild'
 import kleur from 'kleur'
-import { startService } from 'esbuild'
 import timeSpan from 'time-span'
+import { transform } from 'esbuild'
 
 import type { TW, Configuration, Mode } from 'twind'
 import type { VirtualSheet } from 'twind/sheets'
@@ -15,75 +13,7 @@ import { virtualSheet } from 'twind/sheets'
 
 import { watch } from './watch'
 import { extractRulesFromFile } from './extract'
-import findUp from 'find-up'
-
-const tryLoadConfig = async (
-  configFile: string,
-  esbuild: Service,
-): Promise<Configuration & { purge?: string[] | { content?: string[] } }> => {
-  const result = await esbuild.build({
-    bundle: true,
-    entryPoints: [configFile],
-    format: 'cjs',
-    minify: false,
-    platform: 'node',
-    target: `node${process.versions.node}`,
-    sourcemap: true,
-    splitting: false,
-    write: false,
-  })
-
-  const module = { exports: {} as { default?: Configuration } & Configuration }
-
-  new Function(
-    'exports',
-    'require',
-    'module',
-    '__filename',
-    '__dirname',
-    result.outputFiles[0].text,
-  )(
-    module.exports,
-    Module.createRequire?.(configFile) || Module.createRequireFromPath(configFile),
-    module,
-    configFile,
-    path.dirname(configFile),
-  )
-
-  const config = module.exports.default || module.exports || {}
-
-  // could be tailwind config
-  if (
-    (Array.isArray(config.plugins) ||
-      // Twind has variants as {key: string}; Tailwind array or object
-      Object.values(config.variants || {}).some((value) => typeof value == 'object') ||
-      typeof config.prefix == 'string',
-    'presets' in config ||
-      'important' in config ||
-      'separator' in config ||
-      'variantOrder' in config ||
-      'corePlugins' in config ||
-      'purge' in config)
-  ) {
-    console.error(
-      kleur.red(
-        `${kleur.bold(
-          path.relative(process.cwd(), configFile),
-        )} is a tailwindcss configuration file – ${kleur.bold(
-          'only',
-        )} the theme, darkMode, purge files are used`,
-      ),
-    )
-
-    return {
-      theme: config.theme,
-      darkMode: config.darkMode,
-      purge: (config as any).purge,
-    }
-  }
-
-  return config
-}
+import { findConfig, loadConfig as tryLoadConfig } from './config'
 
 export interface RunOptions {
   config?: string
@@ -96,28 +26,12 @@ export interface RunOptions {
 }
 
 export const run = async (globs: string[], options: RunOptions = {}): Promise<void> => {
-  const esbuild = await startService()
-
-  try {
-    await run$(globs, options, esbuild)
-  } finally {
-    esbuild.stop()
-  }
-}
-
-const run$ = async (globs: string[], options: RunOptions, esbuild: Service): Promise<void> => {
   kleur.enabled = !!options.color
 
   options.cwd = path.resolve(options.cwd || '.')
 
   const configFile =
-    (options.config && path.resolve(options.cwd, options.config)) ||
-    (await findUp(['twind.config.js', 'twind.config.mjs', 'twind.config.cjs', 'twind.config.ts'], {
-      cwd: options.cwd,
-    })) ||
-    (await findUp(['tailwind.config.js', 'tailwind.config.mjs', 'tailwind.config.cjs', 'tailwind.config.ts'], {
-      cwd: options.cwd,
-    }))
+    (options.config && path.resolve(options.cwd, options.config)) || (await findConfig(options.cwd))
 
   // Track unknown rules
   const unknownRules = new Set<string>()
@@ -138,13 +52,13 @@ const run$ = async (globs: string[], options: RunOptions, esbuild: Service): Pro
   // The initial run is not counted -> -1, initialRun=0, first run=1
   let runCount = -1
 
-  const loadConfig = async (): Promise<{ sheet: VirtualSheet; tw: TW }> => {
+  const loadConfig = (): { sheet: VirtualSheet; tw: TW } => {
     let config: Configuration & { purge?: string[] | { content?: string[] } } = {}
 
     if (configFile) {
       const configEndTime = timeSpan()
 
-      config = await tryLoadConfig(configFile, esbuild)
+      config = tryLoadConfig(configFile, options.cwd)
 
       console.error(
         kleur.green(
@@ -277,7 +191,7 @@ const run$ = async (globs: string[], options: RunOptions, esbuild: Service): Pro
       let css = sheet.target.join('\n')
       if (options.beautify || !options.watch) {
         const cssEndTime = timeSpan()
-        const result = await esbuild.transform(css, {
+        const result = await transform(css, {
           minify: !options.beautify,
           loader: 'css',
           sourcemap: false,

@@ -1,6 +1,7 @@
-# @twind/cli
 
 <div align="center">
+
+# @twind/cli
 
 [![MIT License](https://flat.badgen.net/github/license/tw-in-js/twind-cli)](https://github.com/tw-in-js/twind-cli/blob/main/LICENSE)
 [![Latest Release](https://flat.badgen.net/npm/v/@twind/cli?icon=npm&label&cache=10800&color=blue)](https://www.npmjs.com/package/@twind/cli)
@@ -41,10 +42,10 @@ twind -w
 # Generate beautified css file
 twind -b
 
-# Use different twind config (esm or cjs)
+# Use different twind config (ts, esm, or cjs)
 twind -c src/twind.config.js
 
-# Use different tailwind config (esm or cjs)
+# Use different tailwind config (ts, esm, or cjs)
 twind -c tailwind.prod.js
 ```
 
