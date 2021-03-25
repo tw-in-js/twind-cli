@@ -28,8 +28,7 @@ export const findConfig = async (cwd = process.cwd()): Promise<string | undefine
       ...TWIND_CONFIG_FILES.map((file) => Path.join('src', file)),
       ...TWIND_CONFIG_FILES.map((file) => Path.join('public', file)),
       ...TAILWIND_CONFIG_FILES,
-    ],
-    { cwd },
+    ].map((file) => Path.resolve(cwd, file)),
   )
 }
 
