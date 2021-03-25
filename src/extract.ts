@@ -39,7 +39,7 @@ const removeInvalidCandidate = (candidate: string): boolean => {
 }
 
 export const extractRulesFromString = (content: string): string[] => {
-  return (content.match(/[^>"'`\s(){}\]=][^<>"'`\s]*[^<>"'`\s(){}=:#.,;?]/g) || [])
+  return (content.match(/(?:\[[^[]+]:|[^>"'`\s(){}\]=])[^<>"'`\s()[]*(?:\[[^[]+]|[^<>"'`\s(){}=:.,])/g) || [])
     .map(cleanCandidate)
     .filter(removeInvalidCandidate)
 }
