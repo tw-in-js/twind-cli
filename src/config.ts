@@ -44,6 +44,12 @@ export const loadFile = <T>(file: string, cwd = process.cwd()): T => {
 
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     return require(moduleId) as T
+  } catch (error) {
+    console.error(
+      kleur.red(
+        `Failed to to load ${kleur.bold(Path.relative(process.cwd(), moduleId))}: ${error.message}`,
+      ),
+    )
 
     return {} as T
   }
