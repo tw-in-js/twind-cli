@@ -33,44 +33,18 @@ export const findConfig = async (cwd = process.cwd()): Promise<string | undefine
 }
 
 export const loadFile = <T>(file: string, cwd = process.cwd()): T => {
-  try {
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    const from = fileURLToPath(import.meta.url)
+  const moduleId = Path.resolve(cwd, file)
 
-    const require = Module.createRequire?.(from) || Module.createRequireFromPath(from)
+  try {
+    const require = Module.createRequire?.(moduleId) || Module.createRequireFromPath(moduleId)
 
     require('sucrase/register')
 
-    // node.js caches required imports (fixes: https://github.com/tw-in-js/twind-cli/issues/2#issuecomment-808122306)
-    delete require.cache[Path.resolve(cwd, file)]
+    delete require.cache[moduleId]
 
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    return require(Path.resolve(cwd, file)) as T
+    return require(moduleId) as T
 
-    // const source = project.readFile(Path.resolve(cwd, file))
-
-    // if (!source) {
-    //   return {} as T
-    // }
-
-    // const result = transform(source, {
-    //   transforms: ['typescript', 'imports'],
-    //   filePath: file,
-    // })
-
-    // const module = { exports: {} as { default?: Configuration } & Configuration }
-
-    // new Function('exports', 'require', 'module', '__filename', '__dirname', result.code)(
-    //   module.exports,
-    //   Module.createRequire?.(file) || Module.createRequireFromPath(file),
-    //   module,
-    //   file,
-    //   Path.dirname(file),
-    // )
-
-    // return module.exports as T
-  } catch {
     return {} as T
   }
 }
