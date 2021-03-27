@@ -42,6 +42,9 @@ export const loadFile = <T>(file: string, cwd = process.cwd()): T => {
 
     require('sucrase/register')
 
+    // node.js caches required imports (fixes: https://github.com/tw-in-js/twind-cli/issues/2#issuecomment-808122306)
+    delete require.cache[Path.resolve(cwd, file)]
+
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     return require(Path.resolve(cwd, file)) as T
 
